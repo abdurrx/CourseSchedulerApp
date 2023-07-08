@@ -44,7 +44,11 @@ class DailyReminder : BroadcastReceiver() {
             set(Calendar.SECOND, 0)
         }
 
-        val pendingIntent = PendingIntent.getBroadcast(context, ID_REPEATING, intent, 0)
+        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.getBroadcast(context, ID_REPEATING, intent, PendingIntent.FLAG_MUTABLE)
+        } else {
+            PendingIntent.getBroadcast(context, ID_REPEATING, intent, 0)
+        }
 
         alarmManager.setRepeating(
             AlarmManager.RTC_WAKEUP,
@@ -58,7 +62,12 @@ class DailyReminder : BroadcastReceiver() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, DailyReminder::class.java)
 
-        val pendingIntent = PendingIntent.getBroadcast(context, ID_REPEATING, intent, 0)
+        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.getBroadcast(context, ID_REPEATING, intent, PendingIntent.FLAG_MUTABLE)
+        } else {
+            PendingIntent.getBroadcast(context, ID_REPEATING, intent, 0)
+        }
+
         pendingIntent.cancel()
 
         alarmManager.cancel(pendingIntent)
@@ -76,10 +85,14 @@ class DailyReminder : BroadcastReceiver() {
         val notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         val intent = Intent(context, HomeActivity::class.java)
-        val pendingIntent = TaskStackBuilder.create(context)
-            .addParentStack(HomeActivity::class.java)
-            .addNextIntent(intent)
-            .getPendingIntent(ID_REPEATING, PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent = TaskStackBuilder.create(context).run {
+            addNextIntentWithParentStack(intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Notification on Android 13
+                getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+            } else {
+                getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+            }
+        }
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
