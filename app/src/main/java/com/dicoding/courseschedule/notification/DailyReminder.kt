@@ -44,11 +44,7 @@ class DailyReminder : BroadcastReceiver() {
             set(Calendar.SECOND, 0)
         }
 
-        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.getBroadcast(context, ID_REPEATING, intent, PendingIntent.FLAG_MUTABLE)
-        } else {
-            PendingIntent.getBroadcast(context, ID_REPEATING, intent, 0)
-        }
+        val pendingIntent = PendingIntent.getBroadcast(context, ID_REPEATING, intent, PendingIntent.FLAG_IMMUTABLE)
 
         alarmManager.setRepeating(
             AlarmManager.RTC_WAKEUP,
@@ -62,12 +58,7 @@ class DailyReminder : BroadcastReceiver() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, DailyReminder::class.java)
 
-        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.getBroadcast(context, ID_REPEATING, intent, PendingIntent.FLAG_MUTABLE)
-        } else {
-            PendingIntent.getBroadcast(context, ID_REPEATING, intent, 0)
-        }
-
+        val pendingIntent = PendingIntent.getBroadcast(context, ID_REPEATING, intent, PendingIntent.FLAG_IMMUTABLE)
         pendingIntent.cancel()
 
         alarmManager.cancel(pendingIntent)
@@ -87,11 +78,7 @@ class DailyReminder : BroadcastReceiver() {
         val intent = Intent(context, HomeActivity::class.java)
         val pendingIntent = TaskStackBuilder.create(context).run {
             addNextIntentWithParentStack(intent)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Notification on Android 13
-                getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
-            } else {
-                getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
-            }
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -101,6 +88,8 @@ class DailyReminder : BroadcastReceiver() {
             .setContentText(context.resources.getString(R.string.notification_message_format))
             .setSmallIcon(R.drawable.ic_notifications)
             .setStyle(notificationStyle)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setSound(notificationSound)
             .setAutoCancel(true)
 
@@ -108,7 +97,7 @@ class DailyReminder : BroadcastReceiver() {
             val channel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
                 NOTIFICATION_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             )
 
             notification.setChannelId(NOTIFICATION_CHANNEL_ID)
